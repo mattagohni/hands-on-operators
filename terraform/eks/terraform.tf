@@ -5,7 +5,7 @@ terraform {
 
   backend "s3" {
     bucket = "xcs-infrastructure-state"
-    key = "cloudland/2024/state.tfstate"
+    key = "cloudland/2024/eks/state.tfstate"
     region = "eu-central-1"
     encrypt = true
   }
