@@ -1,3 +1,3 @@
-output "user-workshop-1-arn" {
-  value = aws_iam_user.workshop-1.arn
+output "eks-role" {
+  value = aws_iam_role.eks_role.arn
 }

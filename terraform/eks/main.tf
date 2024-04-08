@@ -14,6 +14,25 @@ data "aws_availability_zones" "available" {
   }
 }
 
+data "aws_iam_role" "eks-role" {
+  name = "eks-access-role"
+}
+
+/*resource "kubernetes_service_account" "iam_role_test" {
+  connection {
+    host = module.eks.cluster_endpoint
+  }
+  metadata {
+    name      = "workshop"
+    namespace = "workshop"
+    annotations = {
+      # This annotation is needed to tell the service account which IAM role it
+      # should assume
+      "eks.amazonaws.com/role-arn" = data.aws_iam_role.eks-role.arn
+    }
+  }
+}*/
+
 locals {
   cluster_name = "education-eks-${random_string.suffix.result}"
 }
@@ -52,19 +71,27 @@ module "vpc" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "19.15.3"
+  version = "20.8.4"
 
   cluster_name    = local.cluster_name
   cluster_version = "1.27"
 
+  access_entries = {
+    workshop = {
+      principal_arn = data.aws_iam_role.eks-role.arn
+      kubernetes_groups = ["workshop"]
+    }
+  }
+
   vpc_id                         = module.vpc.vpc_id
   subnet_ids                     = module.vpc.private_subnets
   cluster_endpoint_public_access = true
+  authentication_mode                         = "API_AND_CONFIG_MAP"
 
   eks_managed_node_group_defaults = {
     ami_type = "AL2_x86_64"
-
   }
+  iam_role_arn = data.aws_iam_role.eks-role.arn
 
   eks_managed_node_groups = {
     one = {
@@ -75,16 +102,6 @@ module "eks" {
       min_size     = 1
       max_size     = 3
       desired_size = 2
-    }
-
-    two = {
-      name = "node-group-2"
-
-      instance_types = ["t3.small"]
-
-      min_size     = 1
-      max_size     = 2
-      desired_size = 1
     }
   }
 }
