@@ -14,6 +14,13 @@ resource "aws_iam_role" "eks_role" {
           "Service": "eks.amazonaws.com"
         },
       },
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          "AWS": "arn:aws:iam::878321264576:user/workshop-1"
+        }
+      }
     ],
   })
 }
@@ -22,6 +29,7 @@ resource "aws_iam_user_policy_attachment" "workshop-user-attachment" {
   policy_arn = aws_iam_policy.eks_policy.arn
   user       = data.aws_iam_user.workshop-1.user_name
 }
+
 
 resource "aws_iam_policy" "eks_policy" {
   name        = "eks-cluster-access-policy"
@@ -33,14 +41,7 @@ resource "aws_iam_policy" "eks_policy" {
       {
         Effect   = "Allow"
         "Action": [
-          "eks:DescribeNodegroup",
-          "eks:ListNodegroups",
-          "eks:DescribeCluster",
-          "eks:ListClusters",
-          "eks:AccessKubernetesApi",
-          "ssm:GetParameter",
-          "eks:ListUpdates",
-          "eks:ListFargateProfiles"
+          "eks:*",
         ],
         Resource = "*"
       },
