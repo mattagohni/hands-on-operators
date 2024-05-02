@@ -27,3 +27,8 @@ $ mvn quarkus:dev
 ```bash
 $ kubectl apply -f message-server.yaml --namespace=hello-cloudland
 ```
+
+## port-forward
+```bash
+$ kubectl port-forward svc/test-message-server 4711:80
+```

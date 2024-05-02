@@ -11,13 +11,16 @@ import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
+import io.javaoperatorsdk.operator.api.reconciler.DeleteControl;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
+import io.quarkus.logging.Log;
 
 import java.util.Collections;
 
-public class MessageServerReconciler implements Reconciler<MessageServer> {
+public class MessageServerReconciler implements Reconciler<MessageServer>, Cleaner<MessageServer> {
     private final KubernetesClient kubernetesClient;
 
     public MessageServerReconciler(KubernetesClient kubernetesClient) {
@@ -129,5 +132,27 @@ public class MessageServerReconciler implements Reconciler<MessageServer> {
         }
 
         return UpdateControl.noUpdate();
+    }
+
+    @Override
+    public DeleteControl cleanup(MessageServer messageServer, Context<MessageServer> context) {
+        String name = messageServer.getMetadata().getName();
+        String namespace = messageServer.getMetadata().getNamespace();
+
+        try {
+            // Delete the ConfigMap
+            kubernetesClient.configMaps().inNamespace(namespace).withName(name).delete();
+            // delete the Deployment
+            kubernetesClient.apps().deployments().inNamespace(namespace).withName(name).delete();
+            // delete the Service
+            kubernetesClient.services().inNamespace(namespace).withName(name).delete();
+            // delete the Ingress
+            kubernetesClient.network().v1().ingresses().inNamespace(namespace).withName(name).delete();
+        } catch (Exception e) {
+            // Log the exception
+            Log.error("Failed to delete resources: " + e.getMessage());
+        }
+
+        return DeleteControl.defaultDelete();
     }
 }
