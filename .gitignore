@@ -1,3 +1,8 @@
-.idea
+# Ignore all files that end with .tfstate or .tfstate.*
 terraform/**/.terraform.lock.hcl
 terraform/**/.terraform
+terraform/**/terraform.tfstate
+terraform/**/terraform.tfstate.backup
+
+/target
+/.idea

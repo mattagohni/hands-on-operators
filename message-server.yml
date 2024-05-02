@@ -1,0 +1,9 @@
+---
+apiVersion: "k8s.mattagohni.de/v1"
+kind: MessageServer
+metadata:
+  name: "test-message-server"
+  namespace: "default"
+spec:
+    path: "/message"
+    message: "Hello, World!"
