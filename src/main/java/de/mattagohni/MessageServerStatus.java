@@ -1,6 +1,11 @@
 package de.mattagohni;
 
-public class MessageServerStatus {
+import lombok.Getter;
+import lombok.Setter;
 
-    // Add Status information here
+@Getter
+@Setter
+public class MessageServerStatus {
+    private boolean isRunning;
+    private String errorMessage;
 }

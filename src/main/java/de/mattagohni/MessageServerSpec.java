@@ -1,7 +1,11 @@
 package de.mattagohni;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class MessageServerSpec {
-    public String message;
-    public String path;
-    // Add Spec information here
+    private String message;
+    private String path;
 }
