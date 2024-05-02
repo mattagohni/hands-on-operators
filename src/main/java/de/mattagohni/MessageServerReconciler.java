@@ -34,15 +34,20 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
         String message = messageServer.getSpec().getMessage();
         String path = messageServer.getSpec().getPath();
 
+        Log.info("Reconciling MessageServer " + name + " in namespace " + namespace);
+
         // Get the existing ConfigMap
+        Log.info("Checking if ConfigMap exists...");
         ConfigMap existingConfigMap = kubernetesClient.configMaps().inNamespace(namespace).withName(name).get();
 
         // Check if the message has changed
         if (existingConfigMap != null && !existingConfigMap.getData().get("index.html").contains(message)) {
+            Log.info("Updating ConfigMap...");
             // Update the ConfigMap with the new message
             existingConfigMap.getData().put("index.html", "<html><body><h1>" + message + "</h1></body></html>");
             kubernetesClient.configMaps().inNamespace(namespace).createOrReplace(existingConfigMap);
         } else if (existingConfigMap == null) {
+            Log.info("Creating ConfigMap...");
             // Create a new ConfigMap with the message
             ConfigMap configMap = new ConfigMapBuilder()
                     .withNewMetadata().withName(name).endMetadata()
@@ -52,8 +57,10 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
         }
 
         // Check if the Deployment already exists
+        Log.info("Checking if Deployment exists...");
         Resource<Deployment> deploymentResource = kubernetesClient.apps().deployments().inNamespace(namespace).withName(name);
         if (deploymentResource.get() == null) {
+            Log.info("Creating Deployment...");
             // Create a new Deployment for the Nginx server
             Deployment deployment = new DeploymentBuilder()
                     .withNewMetadata().withName(name).endMetadata()
@@ -86,8 +93,10 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
         }
 
         // Check if the Service already exists
+        Log.info("Checking if Service exists...");
         Resource<Service> serviceResource = kubernetesClient.services().inNamespace(namespace).withName(name);
         if (serviceResource.get() == null) {
+            Log.info("Creating Service...");
             // Create a new Service for the Nginx server
             Service service = new ServiceBuilder()
                     .withNewMetadata().withName(name).endMetadata()
@@ -104,8 +113,10 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
         }
 
         // Check if the Ingress already exists
+        Log.info("Checking if Ingress exists...");
         Resource<Ingress> ingressResource = kubernetesClient.network().v1().ingresses().inNamespace(namespace).withName(name);
         if (ingressResource.get() == null) {
+            Log.info("Creating Ingress...");
             // Create a new Ingress for the Nginx server
             Ingress ingress = new IngressBuilder()
                     .withNewMetadata().withName(name).endMetadata()
@@ -131,7 +142,13 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
             ingressResource.createOrReplace(ingress);
         }
 
-        return UpdateControl.noUpdate();
+        // After creating or updating the resources
+        Log.info("Updating MessageServer status...");
+        MessageServerStatus status = new MessageServerStatus();
+        status.setRunning(true);
+        messageServer.setStatus(status);
+
+        return UpdateControl.updateResourceAndPatchStatus(messageServer);
     }
 
     @Override
