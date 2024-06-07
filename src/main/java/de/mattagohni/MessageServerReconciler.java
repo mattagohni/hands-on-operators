@@ -157,6 +157,7 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
         String namespace = messageServer.getMetadata().getNamespace();
 
         try {
+            Log.info("Deleting resources for MessageServer " + name + " in namespace " + namespace);
             // Delete the ConfigMap
             kubernetesClient.configMaps().inNamespace(namespace).withName(name).delete();
             // delete the Deployment

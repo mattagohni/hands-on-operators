@@ -6,4 +6,4 @@ metadata:
   namespace: "default"
 spec:
     path: "/message"
-    message: "Hello, CloudLand 2024!"
+    message: "Hello, dear CloudLand 2024!"

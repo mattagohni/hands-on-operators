@@ -1,0 +1,9 @@
+---
+apiVersion: "k8s.mattagohni.de/v1"
+kind: MessageServer
+metadata:
+  name: "test-message-server-2"
+  namespace: "hello-cloudland"
+spec:
+    path: "/message"
+    message: "Hello, CloudLand 2024! You are the best!"
