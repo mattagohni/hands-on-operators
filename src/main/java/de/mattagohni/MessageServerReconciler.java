@@ -1,30 +1,40 @@
 package de.mattagohni;
 
+import de.mattagohni.metrics.MeterRegistry;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
+import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.DeleteControl;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
+import io.javaoperatorsdk.operator.monitoring.micrometer.MicrometerMetrics;
 import io.quarkus.logging.Log;
 
 import java.util.Collections;
 
+@ControllerConfiguration(
+
+)
 public class MessageServerReconciler implements Reconciler<MessageServer>, Cleaner<MessageServer> {
     private final KubernetesClient kubernetesClient;
 
-    public MessageServerReconciler(KubernetesClient kubernetesClient) {
+    public MessageServerReconciler(KubernetesClient kubernetesClient, MeterRegistry meterRegistry) {
         this.kubernetesClient = kubernetesClient;
+        MicrometerMetrics.newPerResourceCollectingMicrometerMetricsBuilder(meterRegistry.meterRegistry())
+                         .withCleanUpDelayInSeconds(5)
+                         .withCleaningThreadNumber(2)
+                         .build();
     }
 
     @Override
