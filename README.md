@@ -71,3 +71,11 @@ metadata:
 - [ ] operator vorbereiten
 - [ ] aufgabenstellung definieren
 - [ ] lösung vorbereiten
+
+
+
+## Links:
+- https://docs.quarkiverse.io/quarkus-operator-sdk/dev/index.html
+- https://quarkus.io/guides/telemetry-micrometer
+- https://javaoperatorsdk.io/docs/features/#handling-related-events-with-event-sources
+- 
