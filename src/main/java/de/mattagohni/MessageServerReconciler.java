@@ -16,34 +16,16 @@ import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.DeleteControl;
-import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
 import io.javaoperatorsdk.operator.monitoring.micrometer.MicrometerMetrics;
-import io.javaoperatorsdk.operator.processing.event.source.EventSource;
-import io.javaoperatorsdk.operator.processing.event.source.polling.PerResourcePollingEventSource;
 import io.quarkus.logging.Log;
 
-import java.time.Duration;
 import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 
 @ControllerConfiguration()
-public class MessageServerReconciler implements Reconciler<MessageServer>, Cleaner<MessageServer>, EventSourceInitializer<MessageServer> {
+public class MessageServerReconciler implements Reconciler<MessageServer>, Cleaner<MessageServer> {
     private final KubernetesClient kubernetesClient;
-
-    @Override
-    public Map<String, EventSource> prepareEventSources(EventSourceContext<MessageServer> context) {
-        PerResourcePollingEventSource<String, MessageServer> eventSource = new PerResourcePollingEventSource<>(primaryResource -> {
-            Log.info("Polling for MessageServer " + primaryResource.getMetadata().getName() + " in namespace " + primaryResource.getMetadata().getNamespace());
-            return Set.of(primaryResource.getMetadata().getName());
-        }, context, Duration.ofMillis(30000), String.class);
-
-
-        return EventSourceInitializer.nameEventSources(eventSource);
-    }
 
     public MessageServerReconciler(KubernetesClient kubernetesClient, MeterRegistry meterRegistry) {
         this.kubernetesClient = kubernetesClient;
@@ -95,26 +77,28 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
                         .addToMatchLabels("app", name)
                         .endSelector()
                         .withNewTemplate()
-                        .withNewMetadata().addToLabels("app", name).endMetadata()
+                            .withNewMetadata()
+                                .addToLabels("app", name)
+                            .endMetadata()
                             .withNewSpec()
                                 .addNewContainer()
                                 .withName("nginx")
                                 .withImage("nginx:1.14.2")
-                                .addNewVolumeMount()
-                                .withName("html")
-                                .withMountPath("/usr/share/nginx/html")
-                                .endVolumeMount()
+                                    .addNewVolumeMount()
+                                        .withName("html")
+                                        .withMountPath("/usr/share/nginx/html")
+                                    .endVolumeMount()
                                 .endContainer()
                                 .addNewVolume()
                                     .withName("html")
-                                    .withNewConfigMap()
-                                    .withName(name)
-                                    .endConfigMap()
-                                    .endVolume()
-                                    .endSpec()
-                                    .endTemplate()
-                                    .endSpec()
-                                    .build();
+                                        .withNewConfigMap()
+                                            .withName(name)
+                                        .endConfigMap()
+                                .endVolume()
+                            .endSpec()
+                        .endTemplate()
+                    .endSpec()
+                    .build();
             deploymentResource.createOrReplace(deployment);
         }
 
@@ -129,12 +113,12 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
                     .withNewSpec()
                         .withSelector(Collections.singletonMap("app", name))
                         .addNewPort()
-                        .withProtocol("TCP")
-                        .withPort(80)
-                        .withTargetPort(new IntOrString(80))
+                            .withProtocol("TCP")
+                            .withPort(80)
+                            .withTargetPort(new IntOrString(80))
                         .endPort()
-                        .endSpec()
-                        .build();
+                    .endSpec()
+                    .build();
             serviceResource.createOrReplace(service);
         }
 
@@ -148,23 +132,23 @@ public class MessageServerReconciler implements Reconciler<MessageServer>, Clean
                     .withNewMetadata().withName(name).endMetadata()
                     .withNewSpec()
                         .addNewRule()
-                        .withNewHttp()
-                        .addNewPath()
-                        .withPathType("Prefix")
-                        .withPath(path)
-                        .withNewBackend()
-                        .withNewService()
-                        .withName(name)
-                        .withNewPort()
-                        .withNumber(80)
-                        .endPort()
-                        .endService()
-                        .endBackend()
-                        .endPath()
-                        .endHttp()
+                            .withNewHttp()
+                            .addNewPath()
+                                .withPathType("Prefix")
+                                .withPath(path)
+                                    .withNewBackend()
+                                        .withNewService()
+                                            .withName(name)
+                                            .withNewPort()
+                                                .withNumber(80)
+                                            .endPort()
+                                        .endService()
+                                    .endBackend()
+                                .endPath()
+                            .endHttp()
                         .endRule()
-                        .endSpec()
-                        .build();
+                    .endSpec()
+                    .build();
             ingressResource.createOrReplace(ingress);
         }
 
